@@ -1,10 +1,19 @@
+export type Track = 'GC' | 'AIS';
+
 export interface Supervisee {
   id: string;
   name: string;
+  track: Track;
   documents: Document[];
   notes: Note[];
   createdAt: Date;
   lastNudgeAt: Date | null;
+}
+
+export interface CaseTeam {
+  caseCode: string;
+  caseName: string;
+  supervisees: Supervisee[];
 }
 
 export interface Document {
@@ -33,11 +42,12 @@ export interface Nudge {
 }
 
 export interface AppState {
+  caseCode: string | null;
+  caseName: string | null;
   supervisees: Supervisee[];
   nudges: Nudge[];
   activeNudge: Nudge | null;
   isLoading: boolean;
-  demoMode: boolean;
 }
 
 export type AppAction =
@@ -56,5 +66,5 @@ export type AppAction =
   | { type: 'COMPLETE_NUDGE_WITH_NOTE'; payload: { nudge: Nudge; note: Note } }
   | { type: 'SET_ACTIVE_NUDGE'; payload: Nudge | null }
   | { type: 'SET_LOADING'; payload: boolean }
-  | { type: 'SET_DEMO_MODE'; payload: boolean }
+  | { type: 'LOAD_CASE'; payload: { caseCode: string; caseName: string; supervisees: Supervisee[] } }
   | { type: 'RESET_DATA' };

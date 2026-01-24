@@ -59,7 +59,16 @@ export function SuperviseeDetail() {
             {getInitials(supervisee.name)}
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{supervisee.name}</h1>
+            <div className="flex items-center gap-2 mb-1">
+              <h1 className="text-2xl font-bold text-gray-900">{supervisee.name}</h1>
+              <span className={`text-xs font-medium px-2 py-0.5 rounded ${
+                supervisee.track === 'GC'
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'bg-purple-100 text-purple-700'
+              }`}>
+{supervisee.track}
+              </span>
+            </div>
             <p className="text-sm text-gray-500">
               Added {formatDate(supervisee.createdAt)}
             </p>

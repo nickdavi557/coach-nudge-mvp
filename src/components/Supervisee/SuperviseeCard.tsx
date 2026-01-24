@@ -21,7 +21,16 @@ export function SuperviseeCard({ supervisee }: SuperviseeCardProps) {
           {getInitials(supervisee.name)}
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-gray-900 truncate">{supervisee.name}</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold text-gray-900 truncate">{supervisee.name}</h3>
+            <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${
+              supervisee.track === 'GC'
+                ? 'bg-blue-100 text-blue-700'
+                : 'bg-purple-100 text-purple-700'
+            }`}>
+              {supervisee.track}
+            </span>
+          </div>
           <p className="text-sm text-gray-500 mt-1">
             {supervisee.notes.length} notes · {supervisee.documents.length} documents
           </p>

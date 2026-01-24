@@ -1,13 +1,15 @@
 import { createContext, useContext, useReducer, useEffect, useCallback, ReactNode } from 'react';
 import { AppState, AppAction, Supervisee, Note, Document, Nudge } from '../types';
 import * as storage from '../services/storage';
+import { getCaseTeam } from '../data/caseData';
 
 const initialState: AppState = {
+  caseCode: null,
+  caseName: null,
   supervisees: [],
   nudges: [],
   activeNudge: null,
   isLoading: false,
-  demoMode: false,
 };
 
 function appReducer(state: AppState, action: AppAction): AppState {
@@ -139,8 +141,18 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case 'SET_LOADING':
       return { ...state, isLoading: action.payload };
 
-    case 'SET_DEMO_MODE':
-      return { ...state, demoMode: action.payload };
+    case 'LOAD_CASE': {
+      const { caseCode, caseName, supervisees } = action.payload;
+      storage.saveSupervisees(supervisees);
+      storage.saveCaseInfo(caseCode, caseName);
+      return {
+        ...state,
+        caseCode,
+        caseName,
+        supervisees,
+        nudges: [],
+      };
+    }
 
     case 'RESET_DATA':
       storage.clearAllData();
@@ -154,7 +166,8 @@ function appReducer(state: AppState, action: AppAction): AppState {
 interface AppContextType {
   state: AppState;
   dispatch: React.Dispatch<AppAction>;
-  addSupervisee: (name: string, documents?: Document[]) => Supervisee;
+  loadCase: (caseCode: string) => boolean;
+  leaveCase: () => void;
   addNote: (superviseeId: string, content: string, source: 'nudge' | 'manual') => void;
   updateNote: (superviseeId: string, note: Note) => void;
   deleteNote: (superviseeId: string, noteId: string) => void;
@@ -173,23 +186,41 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(appReducer, initialState);
 
   useEffect(() => {
+    const caseInfo = storage.getCaseInfo();
     const supervisees = storage.getSupervisees();
     const nudges = storage.getNudges();
-    dispatch({ type: 'SET_SUPERVISEES', payload: supervisees });
+
+    if (caseInfo) {
+      dispatch({
+        type: 'LOAD_CASE',
+        payload: {
+          caseCode: caseInfo.caseCode,
+          caseName: caseInfo.caseName,
+          supervisees
+        }
+      });
+    }
     dispatch({ type: 'SET_NUDGES', payload: nudges });
   }, []);
 
-  const addSupervisee = (name: string, documents: Document[] = []): Supervisee => {
-    const supervisee: Supervisee = {
-      id: crypto.randomUUID(),
-      name,
-      documents,
-      notes: [],
-      createdAt: new Date(),
-      lastNudgeAt: null,
-    };
-    dispatch({ type: 'ADD_SUPERVISEE', payload: supervisee });
-    return supervisee;
+  const loadCase = (caseCode: string): boolean => {
+    const caseTeam = getCaseTeam(caseCode);
+    if (!caseTeam) {
+      return false;
+    }
+    dispatch({
+      type: 'LOAD_CASE',
+      payload: {
+        caseCode: caseTeam.caseCode,
+        caseName: caseTeam.caseName,
+        supervisees: caseTeam.supervisees,
+      },
+    });
+    return true;
+  };
+
+  const leaveCase = () => {
+    dispatch({ type: 'RESET_DATA' });
   };
 
   const addNote = (superviseeId: string, content: string, source: 'nudge' | 'manual') => {
@@ -283,7 +314,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       value={{
         state,
         dispatch,
-        addSupervisee,
+        loadCase,
+        leaveCase,
         addNote,
         updateNote,
         deleteNote,

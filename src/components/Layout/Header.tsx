@@ -14,9 +14,9 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-4">
-          {state.demoMode && (
-            <span className="px-2 py-1 text-xs font-medium bg-amber-100 text-amber-800 rounded">
-              Demo Mode
+          {state.caseCode && (
+            <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded">
+              {state.caseCode}
             </span>
           )}
           <div className="flex items-center gap-2">

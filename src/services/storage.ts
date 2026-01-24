@@ -3,7 +3,7 @@ import { Supervisee, Nudge } from '../types';
 const STORAGE_KEYS = {
   SUPERVISEES: 'coachnudge_supervisees',
   NUDGES: 'coachnudge_nudges',
-  SETTINGS: 'coachnudge_settings',
+  CASE_INFO: 'coachnudge_case_info',
 };
 
 // Supervisees
@@ -82,9 +82,20 @@ export const updateNudge = (nudge: Nudge): void => {
   }
 };
 
+// Case Info
+export const getCaseInfo = (): { caseCode: string; caseName: string } | null => {
+  const data = localStorage.getItem(STORAGE_KEYS.CASE_INFO);
+  if (!data) return null;
+  return JSON.parse(data);
+};
+
+export const saveCaseInfo = (caseCode: string, caseName: string): void => {
+  localStorage.setItem(STORAGE_KEYS.CASE_INFO, JSON.stringify({ caseCode, caseName }));
+};
+
 // Clear all data
 export const clearAllData = (): void => {
   localStorage.removeItem(STORAGE_KEYS.SUPERVISEES);
   localStorage.removeItem(STORAGE_KEYS.NUDGES);
-  localStorage.removeItem(STORAGE_KEYS.SETTINGS);
+  localStorage.removeItem(STORAGE_KEYS.CASE_INFO);
 };
