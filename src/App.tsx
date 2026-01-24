@@ -3,6 +3,7 @@ import { Header } from './components/Layout/Header'
 import { Sidebar } from './components/Layout/Sidebar'
 import { Dashboard } from './components/Dashboard/Dashboard'
 import { SuperviseeDetail } from './components/Supervisee/SuperviseeDetail'
+import { NudgeSettings } from './components/Settings/NudgeSettings'
 import { NudgeModal } from './components/Nudges/NudgeModal'
 import { useApp } from './contexts/AppContext'
 
@@ -18,6 +19,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/supervisee/:id" element={<SuperviseeDetail />} />
+            <Route path="/settings" element={<NudgeSettings />} />
           </Routes>
         </main>
       </div>

@@ -1,9 +1,10 @@
-import { Supervisee, Nudge } from '../types';
+import { Supervisee, Nudge, NudgeSchedule } from '../types';
 
 const STORAGE_KEYS = {
   SUPERVISEES: 'coachnudge_supervisees',
   NUDGES: 'coachnudge_nudges',
   CASE_INFO: 'coachnudge_case_info',
+  SCHEDULES: 'coachnudge_schedules',
 };
 
 // Supervisees
@@ -93,9 +94,21 @@ export const saveCaseInfo = (caseCode: string, caseName: string): void => {
   localStorage.setItem(STORAGE_KEYS.CASE_INFO, JSON.stringify({ caseCode, caseName }));
 };
 
+// Schedules
+export const getSchedules = (): NudgeSchedule[] => {
+  const data = localStorage.getItem(STORAGE_KEYS.SCHEDULES);
+  if (!data) return [];
+  return JSON.parse(data);
+};
+
+export const saveSchedules = (schedules: NudgeSchedule[]): void => {
+  localStorage.setItem(STORAGE_KEYS.SCHEDULES, JSON.stringify(schedules));
+};
+
 // Clear all data
 export const clearAllData = (): void => {
   localStorage.removeItem(STORAGE_KEYS.SUPERVISEES);
   localStorage.removeItem(STORAGE_KEYS.NUDGES);
   localStorage.removeItem(STORAGE_KEYS.CASE_INFO);
+  localStorage.removeItem(STORAGE_KEYS.SCHEDULES);
 };

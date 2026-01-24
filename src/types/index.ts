@@ -41,6 +41,16 @@ export interface Nudge {
   snoozedUntil?: Date;
 }
 
+export interface NudgeSchedule {
+  superviseeId: string;
+  coachingEnabled: boolean;
+  coachingDays: string[]; // ['monday', 'wednesday'], etc.
+  coachingTime: string; // '09:00', '14:00', etc.
+  reflectionEnabled: boolean;
+  reflectionDays: string[];
+  reflectionTime: string;
+}
+
 export interface AppState {
   caseCode: string | null;
   caseName: string | null;
@@ -48,6 +58,7 @@ export interface AppState {
   nudges: Nudge[];
   activeNudge: Nudge | null;
   isLoading: boolean;
+  schedules: NudgeSchedule[];
 }
 
 export type AppAction =
@@ -67,4 +78,6 @@ export type AppAction =
   | { type: 'SET_ACTIVE_NUDGE'; payload: Nudge | null }
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'LOAD_CASE'; payload: { caseCode: string; caseName: string; supervisees: Supervisee[] } }
-  | { type: 'RESET_DATA' };
+  | { type: 'RESET_DATA' }
+  | { type: 'SET_SCHEDULES'; payload: NudgeSchedule[] }
+  | { type: 'UPDATE_SCHEDULE'; payload: NudgeSchedule };

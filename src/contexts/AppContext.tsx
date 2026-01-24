@@ -1,5 +1,5 @@
 import { createContext, useContext, useReducer, useEffect, useCallback, ReactNode } from 'react';
-import { AppState, AppAction, Supervisee, Note, Document, Nudge } from '../types';
+import { AppState, AppAction, Supervisee, Note, Document, Nudge, NudgeSchedule } from '../types';
 import * as storage from '../services/storage';
 import { getCaseTeam } from '../data/caseData';
 
@@ -10,6 +10,7 @@ const initialState: AppState = {
   nudges: [],
   activeNudge: null,
   isLoading: false,
+  schedules: [],
 };
 
 function appReducer(state: AppState, action: AppAction): AppState {
@@ -158,6 +159,25 @@ function appReducer(state: AppState, action: AppAction): AppState {
       storage.clearAllData();
       return { ...initialState };
 
+    case 'SET_SCHEDULES':
+      return { ...state, schedules: action.payload };
+
+    case 'UPDATE_SCHEDULE': {
+      const existingIndex = state.schedules.findIndex(
+        (s) => s.superviseeId === action.payload.superviseeId
+      );
+      let newSchedules: NudgeSchedule[];
+      if (existingIndex >= 0) {
+        newSchedules = state.schedules.map((s, i) =>
+          i === existingIndex ? action.payload : s
+        );
+      } else {
+        newSchedules = [...state.schedules, action.payload];
+      }
+      storage.saveSchedules(newSchedules);
+      return { ...state, schedules: newSchedules };
+    }
+
     default:
       return state;
   }
@@ -178,6 +198,8 @@ interface AppContextType {
   completeNudge: (nudge: Nudge, response?: string) => void;
   snoozeNudge: (nudge: Nudge) => void;
   dismissNudge: (nudge: Nudge) => void;
+  updateSchedule: (schedule: NudgeSchedule) => void;
+  getScheduleForSupervisee: (superviseeId: string) => NudgeSchedule;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -189,6 +211,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const caseInfo = storage.getCaseInfo();
     const supervisees = storage.getSupervisees();
     const nudges = storage.getNudges();
+    const schedules = storage.getSchedules();
 
     if (caseInfo) {
       dispatch({
@@ -201,6 +224,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       });
     }
     dispatch({ type: 'SET_NUDGES', payload: nudges });
+    dispatch({ type: 'SET_SCHEDULES', payload: schedules });
   }, []);
 
   const loadCase = (caseCode: string): boolean => {
@@ -309,6 +333,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'SET_ACTIVE_NUDGE', payload: null });
   };
 
+  const updateSchedule = (schedule: NudgeSchedule) => {
+    dispatch({ type: 'UPDATE_SCHEDULE', payload: schedule });
+  };
+
+  const getScheduleForSupervisee = useCallback((superviseeId: string): NudgeSchedule => {
+    const existing = state.schedules.find((s) => s.superviseeId === superviseeId);
+    if (existing) return existing;
+    return {
+      superviseeId,
+      coachingEnabled: true,
+      coachingDays: ['monday'],
+      coachingTime: '09:00',
+      reflectionEnabled: true,
+      reflectionDays: ['friday'],
+      reflectionTime: '16:00',
+    };
+  }, [state.schedules]);
+
   return (
     <AppContext.Provider
       value={{
@@ -326,6 +368,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         completeNudge,
         snoozeNudge,
         dismissNudge,
+        updateSchedule,
+        getScheduleForSupervisee,
       }}
     >
       {children}

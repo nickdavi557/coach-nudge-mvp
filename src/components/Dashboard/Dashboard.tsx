@@ -20,7 +20,7 @@ export function Dashboard() {
 
     const success = loadCase(caseCodeInput.trim());
     if (!success) {
-      setError('Invalid case code. Try "DEMO-2024" for a demo.');
+      setError('Invalid case code. Try "DEMO" or "DEMO1".');
     }
   };
 
@@ -50,7 +50,7 @@ export function Dashboard() {
               setError(null);
             }}
             className="input mb-3"
-            placeholder="e.g., DEMO-2024"
+            placeholder="e.g., DEMO"
             autoFocus
           />
           {error && (
@@ -66,7 +66,7 @@ export function Dashboard() {
               <button
                 type="button"
                 onClick={() => {
-                  setCaseCodeInput('DEMO-2024');
+                  setCaseCodeInput('DEMO');
                 }}
                 className="text-bain-red hover:underline"
               >
