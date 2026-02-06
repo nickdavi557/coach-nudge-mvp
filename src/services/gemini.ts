@@ -1,27 +1,29 @@
 import { Supervisee } from '../types';
 
-const API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
-const MODEL = 'gemini-3-flash-preview';
+const API_URL = 'https://portkey.bain.dev/v1/chat/completions';
+const MODEL = '@personal-openai/gpt-5.2';
 
 const getApiKey = () => {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
   if (!apiKey) {
-    throw new Error('Gemini API key not configured. Please set VITE_GEMINI_API_KEY in your .env file.');
+    throw new Error('OpenAI API key not configured. Please set VITE_OPENAI_API_KEY in your .env file.');
   }
   return apiKey;
 };
 
-const callGemini = async (prompt: string): Promise<string> => {
+const callOpenAI = async (prompt: string): Promise<string> => {
   const apiKey = getApiKey();
-  const url = `${API_BASE}/${MODEL}:generateContent?key=${apiKey}`;
 
-  const response = await fetch(url, {
+  const response = await fetch(API_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
+      model: MODEL,
+      messages: [{ role: 'user', content: prompt }],
+      max_completion_tokens: 1000,
     }),
   });
 
@@ -31,7 +33,7 @@ const callGemini = async (prompt: string): Promise<string> => {
   }
 
   const data = await response.json();
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  const text = data.choices?.[0]?.message?.content || '';
 
   return text.trim();
 };
@@ -72,13 +74,13 @@ Generate a brief coaching nudge (2-3 sentences) that:
 Keep the tone warm, professional, and actionable. Start with a verb (e.g., "Consider...", "Try...", "Schedule...").`;
 
   try {
-    const text = await callGemini(prompt);
+    const text = await callOpenAI(prompt);
     if (!text) {
       return `Consider scheduling a brief check-in with ${supervisee.name} to discuss their recent progress and development goals.`;
     }
     return text;
   } catch (error) {
-    console.error('Gemini API error:', error);
+    console.error('OpenAI API error:', error);
     return `Consider scheduling a brief check-in with ${supervisee.name} to discuss their recent progress and development goals.`;
   }
 };
@@ -106,7 +108,7 @@ Provide 2-3 specific conversation topics or actions for the next coaching sessio
 
 Keep the tone constructive and development-focused. Reference specific observations where relevant.`;
 
-  const text = await callGemini(prompt);
+  const text = await callOpenAI(prompt);
   if (!text) {
     throw new Error('Empty response from AI');
   }
@@ -131,5 +133,5 @@ Generate a single, thoughtful reflection prompt (one question) to help the manag
 
 Just return the question, nothing else.`;
 
-  return callGemini(prompt);
+  return callOpenAI(prompt);
 };
