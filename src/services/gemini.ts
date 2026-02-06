@@ -1,6 +1,9 @@
 import { Supervisee } from '../types';
 
-const API_URL = 'https://portkey.bain.dev/v1/chat/completions';
+// Use proxy in development to avoid CORS, direct URL in production
+const API_URL = import.meta.env.DEV
+  ? '/api/openai/chat/completions'
+  : 'https://portkey.bain.dev/v1/chat/completions';
 const MODEL = '@personal-openai/gpt-5.2';
 
 const getApiKey = () => {
@@ -13,29 +16,40 @@ const getApiKey = () => {
 
 const callOpenAI = async (prompt: string): Promise<string> => {
   const apiKey = getApiKey();
+  console.log('Making API call to:', API_URL);
+  console.log('API Key present:', !!apiKey);
 
-  const response = await fetch(API_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      messages: [{ role: 'user', content: prompt }],
-      max_completion_tokens: 1000,
-    }),
-  });
+  try {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [{ role: 'user', content: prompt }],
+        max_completion_tokens: 1000,
+      }),
+    });
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error?.message || 'API request failed');
+    console.log('Response status:', response.status);
+
+    if (!response.ok) {
+      const error = await response.json();
+      console.error('API error response:', error);
+      throw new Error(error.error?.message || 'API request failed');
+    }
+
+    const data = await response.json();
+    console.log('API success:', data);
+    const text = data.choices?.[0]?.message?.content || '';
+
+    return text.trim();
+  } catch (err) {
+    console.error('Fetch error:', err);
+    throw err;
   }
-
-  const data = await response.json();
-  const text = data.choices?.[0]?.message?.content || '';
-
-  return text.trim();
 };
 
 const buildSuperviseeContext = (supervisee: Supervisee): string => {
