@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/openai/:path*",
+      "destination": "https://portkey.bain.dev/v1/:path*"
+    }
+  ]
+}
