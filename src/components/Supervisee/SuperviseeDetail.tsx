@@ -4,13 +4,14 @@ import { getInitials, formatDate } from '../../utils/helpers';
 import { NotesSection } from '../Notes/NotesSection';
 import { SynthesisSection } from '../Synthesis/SynthesisSection';
 import { DocumentUpload } from './DocumentUpload';
+import { DevOpportunitiesEditor } from '../DevOpportunities/DevOpportunitiesEditor';
 import { useState } from 'react';
 
 export function SuperviseeDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { state, dispatch, triggerReflectionNudge, triggerCoachingNudge, deleteDocument } = useApp();
-  const [activeTab, setActiveTab] = useState<'notes' | 'documents' | 'synthesis'>('notes');
+  const [activeTab, setActiveTab] = useState<'notes' | 'development' | 'documents' | 'synthesis'>('notes');
   const [isGeneratingCoaching, setIsGeneratingCoaching] = useState(false);
 
   const supervisee = state.supervisees.find((s) => s.id === id);
@@ -51,6 +52,19 @@ export function SuperviseeDetail() {
     }
   };
 
+  // Count upcoming calendar events for this supervisee
+  const upcomingEvents = state.calendarEvents.filter((e) =>
+    new Date(e.startTime) > new Date()
+    && e.attendees.some((a) => a.superviseeId === supervisee.id)
+  );
+
+  const tabs = [
+    { key: 'notes' as const, label: 'Notes', count: supervisee.notes.length },
+    { key: 'development' as const, label: 'Development', count: supervisee.developmentOpportunities.length },
+    { key: 'documents' as const, label: 'Documents', count: supervisee.documents.length },
+    { key: 'synthesis' as const, label: 'Synthesis' },
+  ];
+
   return (
     <div className="max-w-4xl">
       <div className="flex items-start justify-between mb-6">
@@ -66,11 +80,16 @@ export function SuperviseeDetail() {
                   ? 'bg-blue-100 text-blue-700'
                   : 'bg-purple-100 text-purple-700'
               }`}>
-{supervisee.track}
+                {supervisee.track}
               </span>
             </div>
             <p className="text-sm text-gray-500">
               Added {formatDate(supervisee.createdAt)}
+              {upcomingEvents.length > 0 && (
+                <span className="ml-2 text-amber-600">
+                  · {upcomingEvents.length} upcoming meeting{upcomingEvents.length > 1 ? 's' : ''}
+                </span>
+              )}
             </p>
           </div>
         </div>
@@ -115,25 +134,31 @@ export function SuperviseeDetail() {
 
       <div className="border-b border-gray-200 mb-6">
         <nav className="flex gap-6">
-          {(['notes', 'documents', 'synthesis'] as const).map((tab) => (
+          {tabs.map((tab) => (
             <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
               className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === tab
+                activeTab === tab.key
                   ? 'border-bain-red text-bain-red'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-              {tab === 'notes' && ` (${supervisee.notes.length})`}
-              {tab === 'documents' && ` (${supervisee.documents.length})`}
+              {tab.label}
+              {tab.count !== undefined && ` (${tab.count})`}
             </button>
           ))}
         </nav>
       </div>
 
       {activeTab === 'notes' && <NotesSection supervisee={supervisee} />}
+
+      {activeTab === 'development' && (
+        <DevOpportunitiesEditor
+          superviseeId={supervisee.id}
+          opportunities={supervisee.developmentOpportunities}
+        />
+      )}
 
       {activeTab === 'documents' && (
         <div className="space-y-4">

@@ -1,4 +1,5 @@
 import { Supervisee } from '../types';
+// CalendarEvent used via inline type in generatePreMeetingCoaching
 
 // Use proxy to avoid CORS (works in both dev and production)
 const API_URL = '/api/openai/chat/completions';
@@ -125,6 +126,43 @@ Keep the tone constructive and development-focused. Reference specific observati
     throw new Error('Empty response from AI');
   }
   return text;
+};
+
+export const generatePreMeetingCoaching = async (
+  supervisee: Supervisee,
+  event: { title: string; description: string; eventType: string },
+  matches: Array<{ opportunityLabel: string; coachingTip: string }>
+): Promise<string> => {
+  const context = buildSuperviseeContext(supervisee);
+  const matchDetails = matches
+    .map((m) => `- ${m.opportunityLabel}: ${m.coachingTip}`)
+    .join('\n');
+
+  const prompt = `You are a coaching assistant for a Bain consultant who manages junior team members. They have a meeting tomorrow and one of their supervisees will attend. Based on the meeting context and the supervisee's development opportunities, generate coaching preparation advice.
+
+Meeting: ${event.title}
+Meeting type: ${event.eventType}
+Meeting description: ${event.description}
+
+${context}
+
+Matched development opportunities:
+${matchDetails}
+
+Generate a concise coaching prep guide (4-6 sentences) that:
+1. Acknowledges the specific meeting context
+2. Suggests 1-2 specific things the manager can do BEFORE the meeting to prepare the supervisee
+3. Suggests 1-2 things to watch for DURING the meeting
+4. Gives a brief tip on how to create space for the supervisee to practice their development areas
+
+Format with **bold** for key action items. Keep the tone warm and practical.`;
+
+  try {
+    return await callOpenAI(prompt);
+  } catch (error) {
+    console.error('OpenAI API error:', error);
+    return `**Upcoming: ${event.title}**\n\n${supervisee.name} has development opportunities relevant to this meeting:\n\n${matchDetails}\n\nTake a moment to think about how you can create space for ${supervisee.name} to practice these skills during the meeting.`;
+  }
 };
 
 export const generateReflectionPrompt = async (supervisee: Supervisee): Promise<string> => {

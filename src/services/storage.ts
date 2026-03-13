@@ -1,10 +1,14 @@
-import { Supervisee, Nudge, NudgeSchedule } from '../types';
+import { Supervisee, Nudge, NudgeSchedule, CalendarEvent, MeetingDebrief, Assistant, WeeklyRecap } from '../types';
 
 const STORAGE_KEYS = {
   SUPERVISEES: 'coachnudge_supervisees',
   NUDGES: 'coachnudge_nudges',
   CASE_INFO: 'coachnudge_case_info',
   SCHEDULES: 'coachnudge_schedules',
+  CALENDAR_EVENTS: 'coachnudge_calendar_events',
+  MEETING_DEBRIEFS: 'coachnudge_meeting_debriefs',
+  ASSISTANTS: 'coachnudge_assistants',
+  WEEKLY_RECAPS: 'coachnudge_weekly_recaps',
 };
 
 // Supervisees
@@ -16,6 +20,7 @@ export const getSupervisees = (): Supervisee[] => {
     ...s,
     createdAt: new Date(s.createdAt),
     lastNudgeAt: s.lastNudgeAt ? new Date(s.lastNudgeAt) : null,
+    developmentOpportunities: s.developmentOpportunities || [],
     documents: s.documents.map((d) => ({
       ...d,
       uploadedAt: new Date(d.uploadedAt),
@@ -29,27 +34,6 @@ export const getSupervisees = (): Supervisee[] => {
 
 export const saveSupervisees = (supervisees: Supervisee[]): void => {
   localStorage.setItem(STORAGE_KEYS.SUPERVISEES, JSON.stringify(supervisees));
-};
-
-export const addSupervisee = (supervisee: Supervisee): void => {
-  const supervisees = getSupervisees();
-  supervisees.push(supervisee);
-  saveSupervisees(supervisees);
-};
-
-export const updateSupervisee = (supervisee: Supervisee): void => {
-  const supervisees = getSupervisees();
-  const index = supervisees.findIndex((s) => s.id === supervisee.id);
-  if (index !== -1) {
-    supervisees[index] = supervisee;
-    saveSupervisees(supervisees);
-  }
-};
-
-export const deleteSupervisee = (id: string): void => {
-  const supervisees = getSupervisees();
-  const filtered = supervisees.filter((s) => s.id !== id);
-  saveSupervisees(filtered);
 };
 
 // Nudges
@@ -66,21 +50,6 @@ export const getNudges = (): Nudge[] => {
 
 export const saveNudges = (nudges: Nudge[]): void => {
   localStorage.setItem(STORAGE_KEYS.NUDGES, JSON.stringify(nudges));
-};
-
-export const addNudge = (nudge: Nudge): void => {
-  const nudges = getNudges();
-  nudges.push(nudge);
-  saveNudges(nudges);
-};
-
-export const updateNudge = (nudge: Nudge): void => {
-  const nudges = getNudges();
-  const index = nudges.findIndex((n) => n.id === nudge.id);
-  if (index !== -1) {
-    nudges[index] = nudge;
-    saveNudges(nudges);
-  }
 };
 
 // Case Info
@@ -105,10 +74,77 @@ export const saveSchedules = (schedules: NudgeSchedule[]): void => {
   localStorage.setItem(STORAGE_KEYS.SCHEDULES, JSON.stringify(schedules));
 };
 
+// Calendar Events
+export const getCalendarEvents = (): CalendarEvent[] => {
+  const data = localStorage.getItem(STORAGE_KEYS.CALENDAR_EVENTS);
+  if (!data) return [];
+  const events = JSON.parse(data);
+  return events.map((e: CalendarEvent) => ({
+    ...e,
+    startTime: new Date(e.startTime),
+    endTime: new Date(e.endTime),
+  }));
+};
+
+export const saveCalendarEvents = (events: CalendarEvent[]): void => {
+  localStorage.setItem(STORAGE_KEYS.CALENDAR_EVENTS, JSON.stringify(events));
+};
+
+// Meeting Debriefs
+export const getMeetingDebriefs = (): MeetingDebrief[] => {
+  const data = localStorage.getItem(STORAGE_KEYS.MEETING_DEBRIEFS);
+  if (!data) return [];
+  const debriefs = JSON.parse(data);
+  return debriefs.map((d: MeetingDebrief) => ({
+    ...d,
+    createdAt: new Date(d.createdAt),
+  }));
+};
+
+export const saveMeetingDebriefs = (debriefs: MeetingDebrief[]): void => {
+  localStorage.setItem(STORAGE_KEYS.MEETING_DEBRIEFS, JSON.stringify(debriefs));
+};
+
+// Assistants
+export const getAssistants = (): Assistant[] => {
+  const data = localStorage.getItem(STORAGE_KEYS.ASSISTANTS);
+  if (!data) return [];
+  const assistants = JSON.parse(data);
+  return assistants.map((a: Assistant) => ({
+    ...a,
+    createdAt: new Date(a.createdAt),
+    improvementAreas: a.improvementAreas || [],
+    notes: (a.notes || []).map((n) => ({
+      ...n,
+      createdAt: new Date(n.createdAt),
+    })),
+  }));
+};
+
+export const saveAssistants = (assistants: Assistant[]): void => {
+  localStorage.setItem(STORAGE_KEYS.ASSISTANTS, JSON.stringify(assistants));
+};
+
+// Weekly Recaps
+export const getWeeklyRecaps = (): WeeklyRecap[] => {
+  const data = localStorage.getItem(STORAGE_KEYS.WEEKLY_RECAPS);
+  if (!data) return [];
+  const recaps = JSON.parse(data);
+  return recaps.map((r: WeeklyRecap) => ({
+    ...r,
+    weekStart: new Date(r.weekStart),
+    weekEnd: new Date(r.weekEnd),
+    createdAt: new Date(r.createdAt),
+  }));
+};
+
+export const saveWeeklyRecaps = (recaps: WeeklyRecap[]): void => {
+  localStorage.setItem(STORAGE_KEYS.WEEKLY_RECAPS, JSON.stringify(recaps));
+};
+
 // Clear all data
 export const clearAllData = (): void => {
-  localStorage.removeItem(STORAGE_KEYS.SUPERVISEES);
-  localStorage.removeItem(STORAGE_KEYS.NUDGES);
-  localStorage.removeItem(STORAGE_KEYS.CASE_INFO);
-  localStorage.removeItem(STORAGE_KEYS.SCHEDULES);
+  Object.values(STORAGE_KEYS).forEach((key) => {
+    localStorage.removeItem(key);
+  });
 };
